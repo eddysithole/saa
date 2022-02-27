@@ -1,0 +1,68 @@
+server:
+    port: 8171
+spring:
+    application:
+        name: API-GATEWAY
+    cloud:
+        gateway:
+            routes:
+                - id: TRADE-ENGINE-SERVICE
+                  uri: lb://TRADE-ENGINE-SERVICE
+                  predicates:
+                      - Path=/trades/**
+                  filters:
+                      - name: CircuitBreaker
+                        args:
+                            name: TRADE-ENGINE-SERVICE
+                            fallbackuri: forward:/tradesServiceFallBack
+                - id: ORDERS-SERVICE
+                  uri: lb://ORDERS-SERVICE
+                  predicates:
+                      - Path=/orders/**
+                  filters:
+                      - name: CircuitBreaker
+                        args:
+                            name: ORDER-SERVICE
+                            fallbackuri: forward:/ordersServiceFallBack
+                - id: STATUS-CHECK-SERVICE
+                  uri: lb://STATUS-CHECK-SERVICE
+                  predicates:
+                      - Path=/status/**
+                  filters:
+                      - name: CircuitBreaker
+                        args:
+                            name: STATUS-CHECK-SERVICE
+                            fallbackuri: forward:/statusServiceFallBack
+                - id: INVESTOR-HOLDINGS-SERVICE
+                  uri: lb://INVESTOR-HOLDINGS-SERVICE
+                  predicates:
+                      - Path=/holdings/**
+                  filters:
+                      - name: CircuitBreaker
+                        args:
+                            name: INVESTOR-HOLDINGS-SERVICE
+                            fallbackuri: forward:/holdingsServiceFallBack
+hystrix:
+    command:
+        fallbackcmd:
+            execution:
+                isolation:
+                    thread:
+                        timeoutInMilliseconds: 4000
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: hystrix.stream
+
+        datasource:
+            password: wkpProg219!!
+            url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/integrator
+            username: root
+        jpa:
+            hibernate:
+                ddl-auto: update
+            properties:
+                hibernate:
+                    dialect: org.hibernate.dialect.MySQL8Dialect
